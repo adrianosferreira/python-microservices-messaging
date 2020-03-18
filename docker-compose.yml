@@ -1,0 +1,42 @@
+version: '3'
+
+services:
+  amqp:
+    image: rabbitmq:management
+    hostname: "rabbitmq"
+    environment:
+      RABBITMQ_ERLANG_COOKIE: "SWQOKODSQALRPCLNMEQG"
+      RABBITMQ_DEFAULT_USER: "guest"
+      RABBITMQ_DEFAULT_PASS: "guest"
+      RABBITMQ_DEFAULT_VHOST: "/"
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    labels:
+      NAME: "rabbitmq"
+    networks:
+      - python
+
+  service1:
+    build:
+      context: ./service1
+    volumes:
+      - ./service1:/usr/src/app
+    depends_on:
+      - amqp
+    networks:
+      - python
+    command: ["./wait-for-it.sh", "amqp:5672", "--", "python", "manager.py"]
+
+  service2:
+    build:
+      context: ./service2
+    volumes:
+      - ./service2:/usr/src/app
+    depends_on:
+      - amqp
+    networks:
+      - python
+    command: ["./wait-for-it.sh", "amqp:5672", "--", "python", "manager.py"]
+networks:
+  python:
